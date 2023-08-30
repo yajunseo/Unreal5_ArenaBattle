@@ -1,0 +1,42 @@
+[
+	{
+		"file": "C:\\Unreal5 Projects\\ArenaBattle\\ArenaBattle\\Source\\ArenaBattle\\ArenaBattle.Build.cs",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.36.32532\\bin\\Hostx64\\x64\\cl.exe",
+			"@C:\\Unreal5 Projects\\ArenaBattle\\ArenaBattle\\.vscode\\compileCommands_ArenaBattle\\ArenaBattle.261.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.2\\Engine\\Source"
+	},
+	{
+		"file": "C:\\Unreal5 Projects\\ArenaBattle\\ArenaBattle\\Source\\ArenaBattle\\ArenaBattle.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.36.32532\\bin\\Hostx64\\x64\\cl.exe",
+			"@C:\\Unreal5 Projects\\ArenaBattle\\ArenaBattle\\.vscode\\compileCommands_ArenaBattle\\ArenaBattle.261.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.2\\Engine\\Source"
+	},
+	{
+		"file": "C:\\Unreal5 Projects\\ArenaBattle\\ArenaBattle\\Source\\ArenaBattle\\ArenaBattle.h",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.36.32532\\bin\\Hostx64\\x64\\cl.exe",
+			"@C:\\Unreal5 Projects\\ArenaBattle\\ArenaBattle\\.vscode\\compileCommands_ArenaBattle\\ArenaBattle.261.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.2\\Engine\\Source"
+	},
+	{
+		"file": "C:\\Unreal5 Projects\\ArenaBattle\\ArenaBattle\\Source\\ArenaBattle\\Fountain.cpp",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.36.32532\\bin\\Hostx64\\x64\\cl.exe",
+			"@C:\\Unreal5 Projects\\ArenaBattle\\ArenaBattle\\.vscode\\compileCommands_ArenaBattle\\ArenaBattle.261.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.2\\Engine\\Source"
+	},
+	{
+		"file": "C:\\Unreal5 Projects\\ArenaBattle\\ArenaBattle\\Source\\ArenaBattle\\Fountain.h",
+		"arguments": [
+			"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.36.32532\\bin\\Hostx64\\x64\\cl.exe",
+			"@C:\\Unreal5 Projects\\ArenaBattle\\ArenaBattle\\.vscode\\compileCommands_ArenaBattle\\ArenaBattle.261.rsp"
+		],
+		"directory": "C:\\Program Files\\Epic Games\\UE_5.2\\Engine\\Source"
+	}
+]
