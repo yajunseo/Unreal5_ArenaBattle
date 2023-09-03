@@ -3,7 +3,10 @@
 
 #include "ABPlayerController.h"
 
-void AABPlayerController::OnPossess(APawn *aPawn)
+void AABPlayerController::BeginPlay()
 {
-    Super::OnPossess(aPawn);
+	Super::BeginPlay();
+
+	FInputModeGameOnly GameOnlyInputMode;
+	SetInputMode(GameOnlyInputMode);
 }

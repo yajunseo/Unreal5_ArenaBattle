@@ -4,6 +4,8 @@
 
 #include "ArenaBattle.h"
 #include "GameFramework/Pawn.h"
+#include "GameFramework/FloatingPawnMovement.h"
+#include "InputActionValue.h"
 #include "ABPawn.generated.h"
 
 UCLASS()
@@ -25,5 +27,36 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-	virtual void PossessedBy(AController* NewController) override;
+
+	UPROPERTY(VisibleAnywhere, Category=Collision)
+	UCapsuleComponent* Capsule;
+
+	UPROPERTY(VisibleAnywhere, Category=Visual)
+	USkeletalMeshComponent* Mesh;
+
+	UPROPERTY(VisibleAnywhere, Category=Movement)
+	UFloatingPawnMovement* Movement;
+
+	UPROPERTY(VisibleAnywhere, Category=Camera)
+	USpringArmComponent* SpringArm;
+
+	UPROPERTY(VisibleAnywhere, Category=Camera)
+	UCameraComponent* Camera;
+
+// Input Section
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UInputMappingContext> DefaultMappingContext;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UInputAction> JumpAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UInputAction> MoveAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, Meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UInputAction> LookAction;
+
+	void Move(const FInputActionValue& Value);
+	void Look(const FInputActionValue& Value);
 };
