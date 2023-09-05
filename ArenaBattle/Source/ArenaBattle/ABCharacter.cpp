@@ -50,6 +50,15 @@ AABCharacter::AABCharacter()
 	{
 		LookAction = InputActionLookRef.Object;
 	}
+
+	// Animation
+	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+
+	static ConstructorHelpers::FClassFinder<UAnimInstance> WARRIOR_ANIM(TEXT("/Script/Engine.AnimBlueprint'/Game/ArenaBattle/Animations/WarriorAnimBlueprint.WarriorAnimBlueprint_C'"));
+	if(WARRIOR_ANIM.Succeeded())
+	{
+		GetMesh()->SetAnimClass(WARRIOR_ANIM.Class);
+	}
 }
 
 void AABCharacter::BeginPlay()
