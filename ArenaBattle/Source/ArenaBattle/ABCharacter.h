@@ -45,4 +45,6 @@ protected:
 
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
+	
+	void SetControllerMode(int32 ControlMode);
 };

@@ -59,6 +59,8 @@ AABCharacter::AABCharacter()
 	{
 		GetMesh()->SetAnimClass(WARRIOR_ANIM.Class);
 	}
+
+	SetControllerMode(0);
 }
 
 void AABCharacter::BeginPlay()
@@ -106,4 +108,21 @@ void AABCharacter::Look(const FInputActionValue& Value)
 
 	AddControllerYawInput(LookAxisVector.X);
 	AddControllerPitchInput(LookAxisVector.Y);
+}
+
+void AABCharacter::SetControllerMode(int32 ControlMode)
+{
+	if(ControlMode == 0)
+	{
+		CameraBoom->TargetArmLength = 450.0f;
+		CameraBoom->SetRelativeRotation(FRotator::ZeroRotator);
+		CameraBoom->bUsePawnControlRotation = true;
+		CameraBoom->bInheritPitch = true;
+		CameraBoom->bInheritYaw = true;
+		CameraBoom->bInheritRoll = true;
+		CameraBoom->bDoCollisionTest = true;
+		bUseControllerRotationYaw = false;
+		GetCharacterMovement()->bOrientRotationToMovement= true;
+		GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
+	}
 }
