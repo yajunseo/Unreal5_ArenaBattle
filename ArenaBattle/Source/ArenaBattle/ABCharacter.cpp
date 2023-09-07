@@ -17,13 +17,13 @@ AABCharacter::AABCharacter()
 	}
 
 	// Camera
-	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->TargetArmLength = 400.0f;
-	CameraBoom->bUsePawnControlRotation = true;
+	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
+	SpringArm->SetupAttachment(RootComponent);
+	SpringArm->TargetArmLength = 400.0f;
+	SpringArm->bUsePawnControlRotation = true;
 
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
+	FollowCamera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
 
 	// Input
@@ -51,16 +51,25 @@ AABCharacter::AABCharacter()
 		LookAction = InputActionLookRef.Object;
 	}
 
+	static ConstructorHelpers::FObjectFinder<UInputAction> InputActionViewChangeRef(TEXT("/Script/EnhancedInput.InputAction'/Game/ArenaBattle/Input/Actions/IA_ViewChange.IA_ViewChange'"));
+	if (nullptr != InputActionViewChangeRef.Object)
+	{
+		ViewChangeAction = InputActionViewChangeRef.Object;
+	}
+	
 	// Animation
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 
-	static ConstructorHelpers::FClassFinder<UAnimInstance> WARRIOR_ANIM(TEXT("/Script/Engine.AnimBlueprint'/Game/ArenaBattle/Animations/WarriorAnimBlueprint.WarriorAnimBlueprint_C'"));
+	static ConstructorHelpers::FClassFinder<UAnimInstance> WARRIOR_ANIM(TEXT("/Script/EnhancedInput.InputAction'/Game/ArenaBattle/Input/Actions/IA_ViewChange.IA_ViewChange'"));
 	if(WARRIOR_ANIM.Succeeded())
 	{
 		GetMesh()->SetAnimClass(WARRIOR_ANIM.Class);
 	}
 
-	SetControllerMode(0);
+	SetControlMode(EControlMode::GTA);
+
+	ArmLengthSpeed = 3.0f;
+	ArmRotationSpeed = 10.0f;
 }
 
 void AABCharacter::BeginPlay()
@@ -76,6 +85,70 @@ void AABCharacter::BeginPlay()
 
 }
 
+void AABCharacter::SetControlMode(EControlMode NewControlMode)
+{
+	CurrentControlMode = NewControlMode;
+
+	switch (CurrentControlMode)
+	{
+	case EControlMode::GTA:
+		//SpringArm->TargetArmLength = 450.0f;
+		//SpringArm->SetRelativeRotation(FRotator::ZeroRotator);
+		ArmLengthTo = 450.0f;
+		SpringArm->bUsePawnControlRotation = true;
+		SpringArm->bInheritPitch = true;
+		SpringArm->bInheritRoll = true;
+		SpringArm->bInheritYaw = true;
+		SpringArm->bDoCollisionTest = true;
+		bUseControllerRotationYaw = false;
+		GetCharacterMovement()->bOrientRotationToMovement = true;
+		GetCharacterMovement()->bUseControllerDesiredRotation = false;
+		GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
+		break;
+	case EControlMode::DIABLO:
+		//SpringArm->TargetArmLength = 800.0f;
+		//SpringArm->SetRelativeRotation(FRotator(-45.0f, 0.0f, 0.0f));
+		ArmLengthTo = 800.0f;
+		ArmRotationTo = FRotator(-45.0f, 0.0f, 0.0f);
+		SpringArm->bUsePawnControlRotation = false;
+		SpringArm->bInheritPitch = false;
+		SpringArm->bInheritRoll = false;
+		SpringArm->bInheritYaw = false;
+		SpringArm->bDoCollisionTest = false;
+		bUseControllerRotationYaw = false;
+		GetCharacterMovement()->bOrientRotationToMovement = false;
+		GetCharacterMovement()->bUseControllerDesiredRotation = true;
+		GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
+		break;
+	}
+}
+
+// Called every frame
+void AABCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	SpringArm->TargetArmLength = FMath::FInterpTo(SpringArm->TargetArmLength, ArmLengthTo, DeltaTime, ArmLengthSpeed);
+
+	switch (CurrentControlMode)
+	{
+	case EControlMode::DIABLO:
+		SpringArm->SetRelativeRotation(FMath::RInterpTo(SpringArm->GetRelativeRotation(), ArmRotationTo, DeltaTime, ArmRotationSpeed));
+		break;
+	}
+
+	switch (CurrentControlMode)
+	{
+	case EControlMode::DIABLO:
+		if (DirectionToMove.SizeSquared() > 0.0f)
+		{
+			GetController()->SetControlRotation(FRotationMatrix::MakeFromX(DirectionToMove).Rotator());
+			AddMovementInput(DirectionToMove);
+		}
+		break;
+	}
+}
+
 void AABCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -86,43 +159,71 @@ void AABCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputC
 	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 	EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &AABCharacter::Move);
 	EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AABCharacter::Look);
+	EnhancedInputComponent->BindAction(ViewChangeAction, ETriggerEvent::Triggered, this, &AABCharacter::ViewChange);
+	
 }
 
 void AABCharacter::Move(const FInputActionValue& Value)
 {
 	FVector2D MovementVector = Value.Get<FVector2D>();
-
-	const FRotator Rotation = Controller->GetControlRotation();
-	const FRotator YawRotation(0, Rotation.Yaw, 0);
 	
-	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+	if(CurrentControlMode == EControlMode::GTA)
+	{
+		const FRotator Rotation = Controller->GetControlRotation();
+		const FRotator YawRotation(0, Rotation.Yaw, 0);
+		
+		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
 
-	AddMovementInput(ForwardDirection, MovementVector.X);
-	AddMovementInput(RightDirection, MovementVector.Y);
+		AddMovementInput(ForwardDirection, MovementVector.X);
+		AddMovementInput(RightDirection, MovementVector.Y);
+	}
+
+	else if(CurrentControlMode == EControlMode::DIABLO)
+	{
+		float InputSizeSquared = MovementVector.SquaredLength();
+		float MovementVectorSize = 1.0f;
+		float MovementVectorSizeSquared = MovementVector.SquaredLength();
+		if (MovementVectorSizeSquared > 1.0f)
+		{
+			MovementVector.Normalize();
+			MovementVectorSizeSquared = 1.0f;
+		}
+		else
+		{
+			MovementVectorSize = FMath::Sqrt(MovementVectorSizeSquared);
+		}
+
+		FVector MoveDirection = FVector(MovementVector.X, MovementVector.Y, 0.0f);
+		GetController()->SetControlRotation(FRotationMatrix::MakeFromX(MoveDirection).Rotator());
+		AddMovementInput(MoveDirection, MovementVectorSize);
+	}
 }
 
 void AABCharacter::Look(const FInputActionValue& Value)
 {
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
 
-	AddControllerYawInput(LookAxisVector.X);
-	AddControllerPitchInput(LookAxisVector.Y);
+	switch (CurrentControlMode)
+	{
+		case EControlMode::GTA:
+			AddControllerYawInput(LookAxisVector.X);
+			AddControllerPitchInput(LookAxisVector.Y);
+			break;
+	}
 }
 
-void AABCharacter::SetControllerMode(int32 ControlMode)
+void AABCharacter::ViewChange()
 {
-	if(ControlMode == 0)
+	switch (CurrentControlMode)
 	{
-		CameraBoom->TargetArmLength = 450.0f;
-		CameraBoom->SetRelativeRotation(FRotator::ZeroRotator);
-		CameraBoom->bUsePawnControlRotation = true;
-		CameraBoom->bInheritPitch = true;
-		CameraBoom->bInheritYaw = true;
-		CameraBoom->bInheritRoll = true;
-		CameraBoom->bDoCollisionTest = true;
-		bUseControllerRotationYaw = false;
-		GetCharacterMovement()->bOrientRotationToMovement= true;
-		GetCharacterMovement()->RotationRate = FRotator(0.0f, 720.0f, 0.0f);
+	case EControlMode::GTA:
+		GetController()->SetControlRotation(GetActorRotation());
+		SetControlMode(EControlMode::DIABLO);
+		break;
+	case EControlMode::DIABLO:
+		GetController()->SetControlRotation(SpringArm->GetRelativeRotation());
+		SetControlMode(EControlMode::GTA);
+		break;
 	}
 }
