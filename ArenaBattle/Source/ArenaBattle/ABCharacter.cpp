@@ -60,7 +60,7 @@ AABCharacter::AABCharacter()
 	// Animation
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 
-	static ConstructorHelpers::FClassFinder<UAnimInstance> WARRIOR_ANIM(TEXT("/Script/EnhancedInput.InputAction'/Game/ArenaBattle/Input/Actions/IA_ViewChange.IA_ViewChange'"));
+	static ConstructorHelpers::FClassFinder<UAnimInstance> WARRIOR_ANIM(TEXT("/Script/Engine.AnimBlueprint'/Game/ArenaBattle/Animations/WarriorAnimBlueprint.WarriorAnimBlueprint_C'"));
 	if(WARRIOR_ANIM.Succeeded())
 	{
 		GetMesh()->SetAnimClass(WARRIOR_ANIM.Class);
