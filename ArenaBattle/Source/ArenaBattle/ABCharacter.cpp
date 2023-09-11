@@ -82,6 +82,11 @@ AABCharacter::AABCharacter()
 	IsAttacking = false;
 	MaxCombo = 4;
 	AttackEndComboState();
+
+    GetCapsuleComponent()->SetCollisionProfileName(TEXT("ABCharacter"));
+
+	AttackRange = 200.0f;
+	AttackRadius = 50.0f;
 }
 
 void AABCharacter::BeginPlay()
@@ -168,7 +173,7 @@ void AABCharacter::PostInitializeComponents()
 	ABAnim = Cast<UABAnimInstance>(GetMesh()->GetAnimInstance());
 	if(ABAnim != nullptr)
 	{
-		ABAnim->OnMontageEnded.AddDynamic(this, &AABCharacter::OnAttackMontageEndede);
+		ABAnim->OnMontageEnded.AddDynamic(this, &AABCharacter::OnAttackMontageEndeded);
 		ABAnim->OnNextAttackCheck.AddLambda([this]() -> void
 		{
 			CanNextCombo = false;
@@ -177,8 +182,11 @@ void AABCharacter::PostInitializeComponents()
 			{
 				AttackStartComboState();
 				ABAnim->JumpToAttackMontageSection(CurrentCombo);
+				
 			}
 		});
+
+		ABAnim->OnAttackHitCheck.AddUObject(this, &AABCharacter::AttackCheck);
 	}
 }
 
@@ -194,6 +202,22 @@ void AABCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputC
 	EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &AABCharacter::Look);
 	EnhancedInputComponent->BindAction(ViewChangeAction, ETriggerEvent::Triggered, this, &AABCharacter::ViewChange);
 	EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Triggered, this, &AABCharacter::Attack);
+}
+
+float AABCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator,
+	AActor* DamageCauser)
+{
+	float FinalDamage = Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+
+	ABLOG(Warning, TEXT("DAMAGE : %f"), DamageAmount);
+
+	if(FinalDamage > 0.0f)
+	{
+		ABAnim->SetDeadAnim();
+		SetActorEnableCollision(false);
+	}
+
+	return FinalDamage;
 }
 
 void AABCharacter::Move(const FInputActionValue& Value)
@@ -266,7 +290,7 @@ void AABCharacter::Attack()
 	}
 }
 
-void AABCharacter::OnAttackMontageEndede(UAnimMontage* Montage, bool bInterrupted)
+void AABCharacter::OnAttackMontageEndeded(UAnimMontage* Montage, bool bInterrupted)
 {
 	ABCHECK(IsAttacking);
 	ABCHECK(CurrentCombo > 0);
@@ -287,6 +311,54 @@ void AABCharacter::AttackEndComboState()
 	IsComboInputOn = false;
 	CanNextCombo = false;
 	CurrentCombo = 0;
+}
+
+void AABCharacter::AttackCheck()
+{
+	FHitResult HitResult;
+	FCollisionQueryParams Params(NAME_None, false, this);
+	
+	bool bResult = GetWorld()->SweepSingleByChannel(
+		HitResult,
+		GetActorLocation(),
+		GetActorLocation() + GetActorForwardVector() * 200.0f,
+		FQuat::Identity,
+		ECC_EngineTraceChannel2,
+		FCollisionShape::MakeSphere(50.0f),
+		Params
+	);
+	
+#if ENABLE_DRAW_DEBUG
+
+	FVector TraceVec = GetActorForwardVector() * AttackRange;
+	FVector Center = GetActorLocation() + TraceVec * 0.5f;
+	float HalfHeight = AttackRange * 0.5f + AttackRadius;
+	FQuat CapsuleRot = FRotationMatrix::MakeFromZ(TraceVec).ToQuat();
+	FColor DrawColor = bResult ? FColor::Green : FColor::Red;
+	float DebugLifeTime = 5.0f;
+
+	DrawDebugCapsule(GetWorld(),
+		Center,
+		HalfHeight,
+		AttackRadius,
+		CapsuleRot,
+		DrawColor,
+		false,
+		DebugLifeTime);
+
+#endif
+
+	
+	if(bResult)
+	{
+		if(IsValid(HitResult.GetActor()))
+		{
+			ABLOG(Warning, TEXT("Hit %s"), *HitResult.GetActor()->GetName());
+
+			FDamageEvent DamageEvent;
+			HitResult.GetActor()->TakeDamage(50.0f, DamageEvent, GetController(), this);
+		}
+	}
 }
 
 void AABCharacter::ViewChange()
