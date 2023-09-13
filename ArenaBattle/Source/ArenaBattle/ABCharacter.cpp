@@ -9,6 +9,7 @@
 #include "InputMappingContext.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+#include "ABWeapon.h"
 
 AABCharacter::AABCharacter()
 {
@@ -27,7 +28,7 @@ AABCharacter::AABCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
-
+	
 	// Input
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> InputMappingContextRef(TEXT("/Script/EnhancedInput.InputMappingContext'/Game/ArenaBattle/Input/IMC_Default.IMC_Default'"));
 	if (nullptr != InputMappingContextRef.Object)
@@ -100,6 +101,12 @@ void AABCharacter::BeginPlay()
 		//Subsystem->RemoveMappingContext(DefaultMappingContext);
 	}
 
+	FName WeaponSoket(TEXT("hand_rSocket"));
+	auto CurWeapon = GetWorld()->SpawnActor<AABWeapon>(FVector::ZeroVector, FRotator::ZeroRotator);
+	if(CurWeapon != nullptr)
+	{
+		CurWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, WeaponSoket);
+	}
 }
 
 void AABCharacter::SetControlMode(EControlMode NewControlMode)
