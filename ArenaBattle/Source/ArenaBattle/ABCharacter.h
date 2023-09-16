@@ -50,6 +50,10 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, Meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UCameraComponent> FollowCamera;
+
+protected:
+	UPROPERTY(VisibleAnywhere, Category = UI)
+	TObjectPtr<class UWidgetComponent> HPBarWidget;
 	
 // Input Section
 protected:
@@ -110,4 +114,7 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = Weapon)
 	class AABWeapon* CurrentWeapon;
+
+	UPROPERTY(VisibleAnywhere, Category = Stat)
+	class UABCharacterStatComponent* CharacterStat;
 };

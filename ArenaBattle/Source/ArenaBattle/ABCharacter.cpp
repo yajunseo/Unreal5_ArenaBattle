@@ -4,12 +4,15 @@
 #include "ABCharacter.h"
 
 #include "ABAnimInstance.h"
+#include "ABCharacterStatComponent.h"
+#include "ABCharacterWidget.h"
 #include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "InputMappingContext.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "ABWeapon.h"
+#include "Components/WidgetComponent.h"
 
 AABCharacter::AABCharacter()
 {
@@ -28,6 +31,11 @@ AABCharacter::AABCharacter()
 	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 	FollowCamera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	FollowCamera->bUsePawnControlRotation = false;
+
+	CharacterStat = CreateDefaultSubobject<UABCharacterStatComponent>(TEXT("CHARACTERSTAT"));
+
+	HPBarWidget =  CreateDefaultSubobject<UWidgetComponent>(TEXT("HPBARWIDGET"));
+	HPBarWidget->SetupAttachment(GetMesh());
 	
 	// Input
 	static ConstructorHelpers::FObjectFinder<UInputMappingContext> InputMappingContextRef(TEXT("/Script/EnhancedInput.InputMappingContext'/Game/ArenaBattle/Input/IMC_Default.IMC_Default'"));
@@ -88,6 +96,15 @@ AABCharacter::AABCharacter()
 
 	AttackRange = 200.0f;
 	AttackRadius = 50.0f;
+
+	HPBarWidget->SetRelativeLocation(FVector(0.0f, 0.0f, 180.0f));
+	HPBarWidget->SetWidgetSpace(EWidgetSpace::Screen);
+	static ConstructorHelpers::FClassFinder<UUserWidget> UI_HUD(TEXT("/Script/UMGEditor.WidgetBlueprint'/Game/UI/UI_HPBar.UI_HPBar_C'"));
+	if(UI_HUD.Succeeded())
+	{
+		HPBarWidget->SetWidgetClass(UI_HUD.Class);
+		HPBarWidget->SetDrawSize(FVector2D(150.0f, 50.0f));
+	}
 }
 
 void AABCharacter::BeginPlay()
@@ -107,6 +124,12 @@ void AABCharacter::BeginPlay()
 	// {
 	// 	CurWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, WeaponSoket);
 	// }
+	
+	auto CharacterWidget = Cast<UABCharacterWidget>(HPBarWidget->GetUserWidgetObject());
+	if(nullptr != CharacterWidget)
+	{
+		CharacterWidget->BindCharacterStat(CharacterStat);
+	}
 }
 
 void AABCharacter::SetControlMode(EControlMode NewControlMode)
@@ -195,6 +218,12 @@ void AABCharacter::PostInitializeComponents()
 
 		ABAnim->OnAttackHitCheck.AddUObject(this, &AABCharacter::AttackCheck);
 	}
+
+	CharacterStat->OnHPIsZero.AddLambda([this]() -> void {
+		ABLOG(Warning, TEXT("OnHPIsZero"));
+		ABAnim->SetDeadAnim();
+		SetActorEnableCollision(false);
+	});
 }
 
 void AABCharacter::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent)
@@ -218,12 +247,7 @@ float AABCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEve
 
 	ABLOG(Warning, TEXT("DAMAGE : %f"), DamageAmount);
 
-	if(FinalDamage > 0.0f)
-	{
-		ABAnim->SetDeadAnim();
-		SetActorEnableCollision(false);
-	}
-
+	CharacterStat->SetDamage(FinalDamage);
 	return FinalDamage;
 }
 
@@ -383,7 +407,7 @@ void AABCharacter::AttackCheck()
 			ABLOG(Warning, TEXT("Hit %s"), *HitResult.GetActor()->GetName());
 
 			FDamageEvent DamageEvent;
-			HitResult.GetActor()->TakeDamage(50.0f, DamageEvent, GetController(), this);
+			HitResult.GetActor()->TakeDamage(CharacterStat->GetAttack(), DamageEvent, GetController(), this);
 		}
 	}
 }
