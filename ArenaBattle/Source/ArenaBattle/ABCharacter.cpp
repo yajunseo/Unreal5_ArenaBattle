@@ -3,6 +3,7 @@
 
 #include "ABCharacter.h"
 
+#include "ABAIController.h"
 #include "ABAnimInstance.h"
 #include "ABCharacterStatComponent.h"
 #include "ABCharacterWidget.h"
@@ -105,25 +106,29 @@ AABCharacter::AABCharacter()
 		HPBarWidget->SetWidgetClass(UI_HUD.Class);
 		HPBarWidget->SetDrawSize(FVector2D(150.0f, 50.0f));
 	}
+
+	ABLOG(Warning, TEXT("%s -1"), *GetName());
+	if(!IsPlayerControlled())
+	{
+		ABLOG(Warning, TEXT("%s -2"), *GetName());
+		AIControllerClass = AABAIController::StaticClass();
+		AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+	}
 }
 
 void AABCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
-	APlayerController* PlayerController = CastChecked<APlayerController>(GetController());
-	if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+	if(IsPlayerControlled())
 	{
-		Subsystem->AddMappingContext(DefaultMappingContext, 0);
-		//Subsystem->RemoveMappingContext(DefaultMappingContext);
+		APlayerController* PlayerController = CastChecked<APlayerController>(GetController());
+		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PlayerController->GetLocalPlayer()))
+		{
+			Subsystem->AddMappingContext(DefaultMappingContext, 0);
+			//Subsystem->RemoveMappingContext(DefaultMappingContext);
+		}
 	}
-
-	// FName WeaponSoket(TEXT("hand_rSocket"));
-	// auto CurWeapon = GetWorld()->SpawnActor<AABWeapon>(FVector::ZeroVector, FRotator::ZeroRotator);
-	// if(CurWeapon != nullptr)
-	// {
-	// 	CurWeapon->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, WeaponSoket);
-	// }
 	
 	auto CharacterWidget = Cast<UABCharacterWidget>(HPBarWidget->GetUserWidgetObject());
 	if(nullptr != CharacterWidget)
