@@ -10,6 +10,7 @@
 
 const FName AABAIController::HomePosKey(TEXT("HomePos"));
 const FName AABAIController::PatrolPosKey(TEXT("PatrolPos"));
+const FName AABAIController::TargetKey(TEXT("Target"));
 
 AABAIController::AABAIController()
 {
@@ -34,23 +35,16 @@ void AABAIController::OnPossess(APawn* InPawn)
 	//etWorld()->GetTimerManager().SetTimer(ReapeatTimerHandle, this, &AABAIController::OnRepeatTimer, RepeatInterval, true);
 	
 	UBlackboardComponent* BlackboardComp = Blackboard.Get();
-
-	ABLOG(Warning, TEXT("%d"), 1);
 	
-	ABLOG(Warning, TEXT("%d"), 2);
-
 	if(UseBlackboard(BBAsset, BlackboardComp))
 	{
 		BlackboardComp->SetValueAsVector(HomePosKey, InPawn->GetActorLocation());
 		
-		ABLOG(Warning, TEXT("%d"), 3);
 		if(!RunBehaviorTree(BTAsset))
 		{
-			ABLOG(Warning, TEXT("%d"), 4);
+
 		}
 	}
-	
-	ABLOG(Warning, TEXT("%d"), 5);
 }
 
 // void AABAIController::OnUnPossess()
