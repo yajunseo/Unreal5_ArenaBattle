@@ -7,6 +7,8 @@
 #include "InputActionValue.h"
 #include "ABCharacter.generated.h"
 
+DECLARE_MULTICAST_DELEGATE(FOnAttackEndDelegate);
+
 UCLASS()
 class ARENABATTLE_API AABCharacter : public AABCharacterBase
 {
@@ -80,7 +82,6 @@ protected:
 	void Move(const FInputActionValue& Value);
 	void Look(const FInputActionValue& Value);
 	void ViewChange();
-	void Attack();
 
 	UFUNCTION()
 	void OnAttackMontageEndeded(UAnimMontage* Montage, bool bInterrupted);
@@ -88,6 +89,10 @@ protected:
 	void AttackStartComboState();
 	void AttackEndComboState();
 	void AttackCheck();
+
+public:
+	void Attack();
+	FOnAttackEndDelegate OnAttackEnd;
 	
 private:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = Attack, meta = (AllowPrivateAccess = true))
