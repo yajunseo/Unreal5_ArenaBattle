@@ -90,6 +90,8 @@ protected:
 	void AttackEndComboState();
 	void AttackCheck();
 
+	void OnAssetLoadCompleted();
+	
 public:
 	void Attack();
 	FOnAttackEndDelegate OnAttackEnd;
@@ -124,4 +126,7 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = Stat)
 	class UABCharacterStatComponent* CharacterStat;
+
+	FSoftObjectPath CharacterAssetToLoad = FSoftObjectPath(nullptr);
+	TSharedPtr<struct FStreamableHandle> AssetStreamingHandle;
 };
